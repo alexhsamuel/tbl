@@ -102,14 +102,13 @@ def render(win, model, state):
         if max_x <= x1:
             # Last column: partially off the right edge.  
             t1 = max_x - x0
-            t1 -= 1  # FIXME
             i1 = i + 1
             logging.info("right trunc: {} {}".format(i1, t1))
             break
         x0 = x1
 
     win.erase()
-    for r in range(min(max_y, model.num_row)):
+    for r in range(min(max_y - 1, model.num_row)):
         win.move(r, 0)
         for i in range(i0, i1):
             if not state.vis[i]:
@@ -132,9 +131,10 @@ def main():
 
     try:
         model, state = load_test(sys.argv[1])
+        render(stdscr, model, state)
         while True:
-            render(stdscr, model, state)
             c = stdscr.getch()
+            logging.info("getch() -> {!r}".format(c))
             if c == ord('j'):
                 if state.x > 0:
                     state.x -= 1
@@ -145,8 +145,11 @@ def main():
                 state.x += 1
             elif c == ord('K'):
                 state.x += 8
-            elif c == 27:  # ESC
+            elif c == ord('q'):
                 break
+            else:
+                continue
+            render(stdscr, model, state)
     finally:
         curses.curs_set(True)
         curses.nocbreak()
