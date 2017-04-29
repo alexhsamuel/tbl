@@ -64,6 +64,6 @@ if __name__ == "__main__":
             if len(sel[0]) > 0:
                 key = sys.stdin.read(8)  # FIXME: Is 8 enough?
                 if len(key) > 0:
-                    print(TRANSLATION.get(key, key))
+                    print(repr(TRANSLATION.get(key, key)))
 
 
