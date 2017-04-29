@@ -111,10 +111,10 @@ def render(win, model, state):
     win.erase()
     for r in range(min(max_y, model.num_row)):
         win.move(r, 0)
-        for i, (col, vis, fmt) in enumerate(zip(model.cols, state.vis, state.fmt)):
-            if not (vis and i0 <= i < i1):
+        for i in range(i0, i1):
+            if not state.vis[i]:
                 continue
-            val = fmt(col.arr[r]) + sep
+            val = state.fmt[i](model.cols[i].arr[r]) + sep
             if i == i0:
                 val = val[t0 :]
             if i == i1 - 1:
@@ -138,8 +138,13 @@ def main():
             if c == ord('j'):
                 if state.x > 0:
                     state.x -= 1
+            elif c == ord('J'):
+                if state.x >= 8:
+                    state.x -= 8
             elif c == ord('k'):
                 state.x += 1
+            elif c == ord('K'):
+                state.x += 8
             elif c == 27:  # ESC
                 break
     finally:
