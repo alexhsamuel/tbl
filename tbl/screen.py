@@ -1,11 +1,11 @@
 from   __future__ import absolute_import, division, print_function, unicode_literals
 
+from   bisect import *
+from   contextlib import contextmanager
+import curses
 import functools
-from   six.moves import range
-import sys
-
 import logging
-logging.basicConfig(filename="log", level=logging.INFO)
+import sys
 
 #-------------------------------------------------------------------------------
 
@@ -45,13 +45,110 @@ class State(object):
         self.vis = [True] * num_columns
         self.fmt = [ choose_fmt(c.arr) for c in model.cols ]
         self.x = 0
+        self.left_border    = "\u2551 "
+        self.separator      = " \u2502 "
+        self.right_border   = " \u2551"
 
 
 
 #-------------------------------------------------------------------------------
 
-import csv
-import curses
+def lay_out_cols(model, state):
+    """
+    Computes column layout.
+
+    @return
+      A sequence of `[x, item]` pairs describing layout, where `x` is the
+      column position and `item` is either a column index from the model or
+      a string literal.
+    """
+    layout = []
+    x0 = 0
+
+    if state.left_border:
+        layout.append([x0, state.left_border])
+        x0 += len(state.left_border)
+
+    first_col = True
+
+    for i in range(model.num_col):
+        if not state.vis[i]:
+            # Not visibile.
+            continue
+        
+        if first_col:
+            first_col = False
+        elif state.separator:
+            layout.append([x0, state.separator])
+            x0 += len(state.separator)
+
+        fmt = state.fmt[i]
+        layout.append([x0, i])
+        x0 += fmt.width
+
+    if state.right_border:
+        layout.append([x0, state.right_border])
+        x0 += len(state.right_border)
+
+    return layout
+
+
+def render(win, model, state):
+    """
+    Renders `model` with view `state` in curses `win`.
+    """
+    # Compute the column layout.
+    layout = lay_out_cols(model, state)
+
+    max_y, max_x = win.getmaxyx()
+
+    # Truncate to window size and position.
+    layout_x = [ x for x, _ in layout ]
+    # y_max, x_max = stdscr.getmaxyx()
+    y_max, x_max = 69, 80
+    i0 = bisect_right(layout_x, state.x) - 1
+    i1 = bisect_left(layout_x, state.x + x_max)
+    layout = [ (x - state.x, l) for x, l in layout[i0 : i1] ]
+
+    # Now, draw.
+    for r in range(min(max_y - 1, model.num_row)):
+        win.move(r, 0)
+        for x, v in layout:
+            if isinstance(v, int):
+                v = state.fmt[v](model.cols[v].arr[r])
+            
+            if x < 0:
+                v = v[-x :]
+            if x + len(v) >= max_x:
+                v = v[: max_x - x]
+
+            win.addstr(v)
+
+
+@contextmanager
+def curses_screen():
+    """
+    Curses context manager.
+
+    Returns the screen window on entry.  Restores the terminal state on exit.
+    """
+    stdscr = curses.initscr()
+    curses.noecho()
+    stdscr.keypad(True)
+    curses.cbreak()
+    curses.curs_set(False)
+
+    try:
+        yield stdscr
+    finally:
+        curses.curs_set(True)
+        curses.nocbreak()
+        stdscr.keypad(False)
+        curses.echo()
+        curses.endwin()
+
+
+#-------------------------------------------------------------------------------
 
 def load_test(path):
     import csv
@@ -65,73 +162,15 @@ def load_test(path):
     return model, state
 
 
-def first_idx(items, pred):
-    for i, item in enumerate(items):
-        if pred(item):
-            return i
-    else:
-        return None
-
-
-def render(win, model, state):
-    sep = " | "
-
-    max_y, max_x = win.getmaxyx()
-
-    # Determine the first and last columns we need to show, and how much
-    # to truncate them.
-    x0 = -state.x
-    i0 = 0
-    for i, (fmt, vis) in enumerate(zip(state.fmt, state.vis)):
-        if not vis:
-            continue
-        x1 = x0 + fmt.width + len(sep)
-        logging.info("x0={} x1={} width={}".format(x0, x1, fmt.width))
-        if x1 <= 0:
-            # This column is fully off the left edge.
-            logging.info("off left")
-            x0 = x1
-            continue
-
-        if x0 <= 0:
-            # First column: partially off the left edge.
-            i0 = i
-            t0 = -x0
-            x0 = 0
-            logging.info("left trunc: {} {}".format(i0, t0))
-        if max_x <= x1:
-            # Last column: partially off the right edge.  
-            t1 = max_x - x0
-            i1 = i + 1
-            logging.info("right trunc: {} {}".format(i1, t1))
-            break
-        x0 = x1
-
-    win.erase()
-    for r in range(min(max_y - 1, model.num_row)):
-        win.move(r, 0)
-        for i in range(i0, i1):
-            if not state.vis[i]:
-                continue
-            val = state.fmt[i](model.cols[i].arr[r]) + sep
-            if i == i0:
-                val = val[t0 :]
-            if i == i1 - 1:
-                val = val[: t1]
-            win.addstr(val)
-    win.refresh()
-
-
 def main():
-    stdscr = curses.initscr()
-    curses.noecho()
-    stdscr.keypad(True)
-    curses.cbreak()
-    curses.curs_set(False)
+    logging.basicConfig(filename="log", level=logging.INFO)
 
-    try:
-        model, state = load_test(sys.argv[1])
+    model, state = load_test(sys.argv[1])
+
+    with curses_screen() as stdscr:
         render(stdscr, model, state)
+        stdscr.refresh()
+
         while True:
             c = stdscr.getch()
             logging.info("getch() -> {!r}".format(c))
@@ -149,13 +188,9 @@ def main():
                 break
             else:
                 continue
+            stdscr.erase()
             render(stdscr, model, state)
-    finally:
-        curses.curs_set(True)
-        curses.nocbreak()
-        stdscr.keypad(False)
-        curses.echo()
-        curses.endwin()
+            stdscr.refresh()
 
 
 
