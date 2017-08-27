@@ -347,7 +347,7 @@ def main():
 
     vw = view.View()
     for col in mdl.cols:
-        fmt = formatter.choose_formatter(col.arr)
+        fmt = formatter.choose_formatter(col.arr, min_width=4)
         vw.add_column(col.id, fmt)
 
     ctl = controller.Controller()
