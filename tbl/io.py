@@ -6,7 +6,7 @@ from   .model import Model
 
 #-------------------------------------------------------------------------------
 
-def load_test(path):
+def load_csv_test(path, *, convert=True):
     with open(path) as file:
         reader = csv.reader(file)
         rows = iter(reader)
@@ -14,7 +14,8 @@ def load_test(path):
         arrs = zip(*list(rows))
     mdl = Model(path)
     for arr, name in zip(arrs, names):
-        arr = guess_convert(arr)
+        if convert:
+            arr = guess_convert(arr)
         mdl.add_col(arr, name)
     return mdl
 

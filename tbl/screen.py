@@ -4,6 +4,7 @@ Curses-based application.
 
 #-------------------------------------------------------------------------------
 
+import argparse
 from   contextlib import contextmanager
 import curses
 import curses.textpad
@@ -343,7 +344,22 @@ def main_loop(mdl, vw, ctl):
 def main():
     logging.basicConfig(filename="log", level=logging.DEBUG)
 
-    mdl = io.load_test(sys.argv[1])
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument(
+        "--convert", dest="convert", action="store_true", default=True,
+        help="try to convert columns automatically")
+    parser.add_argument(
+        "--no-convert", dest="convert", action="store_false",
+        help="don't convert columns automatically")
+
+    parser.add_argument(
+        "path", metavar="FILE",
+        help="load CSV from FILE")
+
+    args = parser.parse_args()
+
+    mdl = io.load_csv_test(args.path, convert=args.convert)
 
     vw = view.View()
     for col in mdl.cols:

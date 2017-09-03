@@ -7,6 +7,10 @@ from   .commands import command, CmdError, CmdResult
 try:
     from fixfmt.numpy import choose_formatter
 
+    # FIXME
+    import fixfmt.numpy
+    fixfmt.numpy.DEFAULTS["string"]["max_size"] = 24
+
 except ImportError:
     # Not available.
     logging.warning("fixfmt not available")
