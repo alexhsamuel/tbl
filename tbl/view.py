@@ -1,3 +1,4 @@
+import dataclasses
 import logging
 import numpy as np
 
@@ -7,43 +8,8 @@ from   .lib import clip, if_none
 
 #-------------------------------------------------------------------------------
 
-class Position:
-    """
-    A location in (col, row) index coordinates.
-    """
-
-    def __init__(self, c, r):
-        self.c = c
-        self.r = r
-
-
-    def __repr__(self):
-        return "{}({!r}, {!r})".format(self.__class__.__name__, self.c, self.r)
-
-
-    def __iter__(self):
-        return iter((self.c, self.r))
-
-
-
-class Coordinates:
-    """
-    A location in character (x, y) coordinates.
-    """
-
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
-
-
-    def __repr__(self):
-        return "{}({!r}, {!r})".format(self.__class__.__name__, self.x, self.y)
-
-
-    def __iter__(self):
-        return iter((self.x, self.y))
-
-
+Position    = dataclasses.make_dataclass("Position", ("c", "r"))
+Coordinates = dataclasses.make_dataclass("Coordinates", ("x", "y"))
 
 #-------------------------------------------------------------------------------
 
