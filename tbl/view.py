@@ -13,6 +13,14 @@ Coordinates = dataclasses.make_dataclass("Coordinates", ("x", "y"))
 
 #-------------------------------------------------------------------------------
 
+CFG = {
+    "row_num_sep"   : "\u2551",
+    "left_border"   : "",
+    "separator"     : "\u2502",
+    "right_border"  : "\u2551",
+    "pad"           : 1,
+}
+
 class View:
     """
     Owns the followin state:
@@ -35,7 +43,7 @@ class View:
 
 
 
-    def __init__(self):
+    def __init__(self, cfg=CFG):
         # Overall dimensions.
         self.screen_size = Coordinates(80, 25)
 
@@ -58,12 +66,7 @@ class View:
         self.show_header = True
         self.show_row_num = True
 
-        # Decoration characters.
-        self.row_num_sep    = "\u2551"
-        self.left_border    = ""
-        self.separator      = "\u2502"
-        self.right_border   = "\u2551"
-        self.pad            = 1
+        self.cfg = cfg
 
         # FIXME: Determine this properly.
         row_num_fmt         = lambda n: format(n, "06d")
@@ -137,12 +140,13 @@ class Layout:
         self.fixed_text = []
 
         if vw.show_row_num:
-            w = vw.row_num_fmt.width + 2 * vw.pad
+            w = vw.row_num_fmt.width + 2 * vw.cfg["pad"]
             self.fixed_cols.append((self.x, w, "row_num"))
             self.x += w
-            if vw.row_num_sep:
-                w = len(vw.row_num_sep)
-                self.fixed_text.append((self.x, w, vw.row_num_sep))
+            row_num_sep = vw.cfg["row_num_sep"]
+            if row_num_sep:
+                w = len(row_num_sep)
+                self.fixed_text.append((self.x, w, row_num_sep))
                 self.x += w
 
         # Record where the fixed stuff ends.
@@ -164,19 +168,19 @@ class Layout:
 
         need_sep = False
 
-        if vw.left_border:
-            add_text(vw.left_border)
+        if vw.cfg["left_border"]:
+            add_text(vw.cfg["left_border"])
 
         for c, col in enumerate(vw.cols):
             if not col.visible:
                 continue
-            if vw.separator and need_sep:
-                add_text(vw.separator)
-            add_col(col.fmt.width + 2 * vw.pad, c)
+            if vw.cfg["separator"] and need_sep:
+                add_text(vw.cfg["separator"])
+            add_col(col.fmt.width + 2 * vw.cfg["pad"], c)
             need_sep = True
             
-        if vw.right_border:
-            add_text(vw.right_border)
+        if vw.cfg["right_border"]:
+            add_text(vw.cfg["right_border"])
 
 
     def locate_col(self, x0):

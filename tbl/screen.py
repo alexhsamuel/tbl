@@ -157,7 +157,8 @@ def render_table(win, vw, mdl):
         rows = np.concatenate([[-1], rows])
 
     # The padding at the left and right of each field value.
-    pad = " " * vw.pad
+    # FIXME: Don't use the view pad for this.
+    pad = " " * vw.cfg["pad"]
 
     # Draw columns.
     for c, x, w, trim, name, fmt, arr in view._rendered_cols(vw, mdl):
