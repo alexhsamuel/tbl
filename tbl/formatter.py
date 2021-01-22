@@ -29,7 +29,7 @@ def decrease_column_precision(vw):
     try:
         if fmt.precision is None:
             pass
-        elif fmt.precision is 0:
+        elif fmt.precision == 0:
             fmt.precision = None
         else:
             fmt.precision -= 1
