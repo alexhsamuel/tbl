@@ -85,13 +85,13 @@ def init_attrs():
 
     Attrs.normal = curses.color_pair(0)
 
-    curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLUE)
+    curses.init_pair(1, 0x0f, 0x3c)
     Attrs.cur_pos = curses.color_pair(1)
 
-    curses.init_pair(2, curses.COLOR_BLACK, curses.COLOR_WHITE)
+    curses.init_pair(2, 0x0f, 0xec)
     Attrs.cur_col = curses.color_pair(2)
 
-    curses.init_pair(3, curses.COLOR_BLACK, curses.COLOR_WHITE)
+    curses.init_pair(3, 0x0f, 0xec)
     Attrs.cur_row = curses.color_pair(3)
 
     curses.init_pair(4, curses.COLOR_RED, -1)
